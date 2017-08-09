@@ -1,23 +1,8 @@
 const Request = require( "tedious" ).Request;
 
+const parameterBuilder = require( "./parameterBuilder" );
 const types = require( "./types" );
 const fileLoader = require( "./fileLoader" );
-
-// TODO: support array params
-function addParams( request, params ) {
-	if ( !params ) {
-		return;
-	}
-	Object.keys( params ).forEach( key => {
-		const param = params[ key ];
-		if ( typeof param.type === "function" ) {
-			param.type = param.type();
-		}
-		const { type, length, precision, scale } = param.type;
-
-		request.addParameter( key, type, param.val, { length, precision, scale } );
-	} );
-}
 
 function transformRow( row ) {
 	// TODO: maybe we need to make some decisions based on the sql type?
@@ -46,7 +31,7 @@ class Api {
 					}
 					return resolve( rowCount );
 				} );
-				addParams( request, params );
+				parameterBuilder( request, params );
 				conn.execSql( request );
 			} );
 		} );
@@ -63,7 +48,7 @@ class Api {
 					}
 					return resolve( data );
 				} );
-				addParams( request, params );
+				parameterBuilder( request, params );
 				request.on( "row", obj => data.push( obj ) );
 				conn.execSql( request );
 			} );
